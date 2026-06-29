@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#111111" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Reaction Tap" />
+  <meta name="description" content="A fast-paced reaction speed game. Tap the green X before it moves!" />
+  <title>Reaction Tap</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: #111;
+    }
+
+    /* ── START SCREEN ── */
+    #start-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .logo-area {
+      text-align: center;
+    }
+
+    .logo-icon {
+      font-size: 64px;
+      line-height: 1;
+      margin-bottom: 12px;
+      display: block;
+      color: #22c55e;
+      font-weight: 900;
+    }
+
+    #start-screen h1 {
+      color: #fff;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    #start-screen .subtitle {
+      color: #888;
+      font-size: 15px;
+      text-align: center;
+      line-height: 1.6;
+      max-width: 260px;
+    }
+
+    .time-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .time-btn {
+      padding: 18px 20px;
+      border-radius: 14px;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.15s, transform 0.1s, border-color 0.15s;
+    }
+
+    .time-btn:active {
+      background: #222;
+      transform: scale(0.97);
+      border-color: #444;
+    }
+
+    .time-btn .btn-sub {
+      font-size: 12px;
+      color: #666;
+      font-weight: 400;
+    }
+
+    .time-btn .btn-arrow {
+      color: #444;
+      font-size: 18px;
+    }
+
+    /* ── GAME SCREEN ── */
+    #game-screen {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+    }
+
+    #hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: #000;
+      flex-shrink: 0;
+      padding-top: max(12px, env(safe-area-inset-top));
+    }
+
+    .hud-item {
+      text-align: center;
+      min-width: 70px;
+    }
+
+    .hud-label {
+      font-size: 10px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+
+    .hud-val {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .hud-val.green { color: #22c55e; }
+    .hud-val.red   { color: #ef4444; }
+    .hud-val.warn  { color: #f59e0b; }
+
+    #grid-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #grid {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
+      padding: 8px;
+      background: #FFD700;
+    }
+
+    .quadrant {
+      background: #181818;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.08s;
+      touch-action: manipulation;
+    }
+
+    .quadrant:active {
+      background: #222;
+    }
+
+    .x-mark {
+      font-size: clamp(56px, 14vw, 88px);
+      font-weight: 800;
+      line-height: 1;
+      transition: color 0.07s, transform 0.07s;
+      pointer-events: none;
+    }
+
+    .x-red   { color: #ef4444; }
+    .x-green { color: #22c55e; transform: scale(1.18); }
+
+    #shake-overlay {
+      position: absolute;
+      inset: 0;
+      border: 7px solid #ef4444;
+      border-radius: 6px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.05s;
+    }
+
+    /* ── RESULT SCREEN ── */
+    #result-screen {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      background: #111;
+      padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    }
+
+    #result-screen h2 {
+      color: #fff;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .grade-block {
+      text-align: center;
+    }
+
+    .grade {
+      font-size: 72px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .grade-msg {
+      color: #888;
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    .result-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #222;
+    }
+
+    .result-row:last-child {
+      border-bottom: none;
+    }
+
+    .result-label {
+      color: #888;
+      font-size: 14px;
+    }
+
+    .result-num {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .result-num.g { color: #22c55e; }
+    .result-num.r { color: #ef4444; }
+    .result-num.w { color: #fff; }
+
+    .btn-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .play-again {
+      padding: 17px;
+      border-radius: 14px;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .play-again:active {
+      background: #222;
+      transform: scale(0.97);
+    }
+
+    .play-again.primary {
+      background: #22c55e;
+      border-color: #22c55e;
+      color: #000;
+    }
+
+    .play-again.primary:active {
+      background: #16a34a;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes shake {
+      0%   { transform: translate(0,0) rotate(0deg); }
+      15%  { transform: translate(-9px, 5px) rotate(-1.2deg); }
+      30%  { transform: translate(9px, -5px) rotate(1.2deg); }
+      45%  { transform: translate(-6px, 3px) rotate(-0.6deg); }
+      60%  { transform: translate(6px, -3px) rotate(0.6deg); }
+      75%  { transform: translate(-3px, 2px) rotate(0deg); }
+      100% { transform: translate(0,0) rotate(0deg); }
+    }
+
+    @keyframes pulse-green {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .x-green {
+      animation: pulse-green 0.6s ease-in-out infinite;
+    }
+
+    /* ── COUNTDOWN OVERLAY ── */
+    #countdown-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #countdown-num {
+      font-size: 120px;
+      font-weight: 800;
+      color: #22c55e;
+      line-height: 1;
+      animation: countPop 0.9s ease-out forwards;
+    }
+
+    #countdown-label {
+      font-size: 18px;
+      color: #888;
+    }
+
+    @keyframes countPop {
+      0%   { transform: scale(1.4); opacity: 0; }
+      20%  { transform: scale(1.0); opacity: 1; }
+      80%  { transform: scale(1.0); opacity: 1; }
+      100% { transform: scale(0.8); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START SCREEN -->
+  <div id="start-screen">
+    <div class="logo-area">
+      <span class="logo-icon">✕</span>
+      <h1>Reaction Tap</h1>
+    </div>
+    <p class="subtitle">Tap the green X before it moves. Train your reaction speed.</p>
+    <div class="time-btns">
+      <div class="time-btn" ontouchstart="startGame(60)" onclick="startGame(60)">
+        <span>1 Minute</span>
+        <span class="btn-sub">Quick game</span>
+        <span class="btn-arrow">›</span>
+      </div>
+      <div class="time-btn" ontouchstart="startGame(180)" onclick="startGame(180)">
+        <span>3 Minutes</span>
+        <span class="btn-sub">Standard</span>
+        <span class="btn-arrow">›</span>
+      </div>
+      <div class="time-btn" ontouchstart="startGame(300)" onclick="startGame(300)">
+        <span>5 Minutes</span>
+        <span class="btn-sub">Endurance</span>
+        <span class="btn-arrow">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen">
+    <div id="hud">
+      <div class="hud-item">
+        <div class="hud-label">Correct</div>
+        <div class="hud-val green" id="score">0</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">Time</div>
+        <div class="hud-val" id="timer">1:00</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">Misses</div>
+        <div class="hud-val red" id="misses">0</div>
+      </div>
+    </div>
+
+    <div id="grid-wrap">
+      <div id="grid">
+        <div class="quadrant" id="q0" ontouchstart="handleTap(event,0)" onclick="handleTap(event,0)">
+          <span class="x-mark x-red">✕</span>
+        </div>
+        <div class="quadrant" id="q1" ontouchstart="handleTap(event,1)" onclick="handleTap(event,1)">
+          <span class="x-mark x-red">✕</span>
+        </div>
+        <div class="quadrant" id="q2" ontouchstart="handleTap(event,2)" onclick="handleTap(event,2)">
+          <span class="x-mark x-red">✕</span>
+        </div>
+        <div class="quadrant" id="q3" ontouchstart="handleTap(event,3)" onclick="handleTap(event,3)">
+          <span class="x-mark x-red">✕</span>
+        </div>
+      </div>
+      <div id="shake-overlay"></div>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="result-screen"></div>
+
+</div>
+
+<!-- COUNTDOWN OVERLAY (hidden by default) -->
+<div id="countdown-overlay" style="display:none;">
+  <div id="countdown-num">3</div>
+  <div id="countdown-label">Get ready…</div>
+</div>
+
+<script>
+  let score = 0, misses = 0, activeQ = -1;
+  let timeLeft = 0, timerInterval = null, shakeTimeout = null;
+  let gameRunning = false;
+  let tapLocked = false;
+
+  function showScreen(id) {
+    ['start-screen','game-screen','result-screen'].forEach(s => {
+      document.getElementById(s).style.display = 'none';
+    });
+    const el = document.getElementById(id);
+    el.style.display = 'flex';
+    el.style.flexDirection = 'column';
+  }
+
+  function startGame(seconds) {
+    score = 0; misses = 0; activeQ = -1;
+    timeLeft = seconds; gameRunning = false; tapLocked = false;
+    document.getElementById('score').textContent = '0';
+    document.getElementById('misses').textContent = '0';
+    updateTimerDisplay();
+    setAllRed();
+    showScreen('game-screen');
+    runCountdown(3, () => {
+      gameRunning = true;
+      lightRandom();
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const timerEl = document.getElementById('timer');
+        if (timeLeft <= 10) timerEl.classList.add('warn');
+        updateTimerDisplay();
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    });
+  }
+
+  function runCountdown(count, done) {
+    const overlay = document.getElementById('countdown-overlay');
+    const numEl   = document.getElementById('countdown-num');
+    overlay.style.display = 'flex';
+    numEl.textContent = count;
+    numEl.style.animation = 'none';
+    numEl.offsetHeight;
+    numEl.style.animation = 'countPop 0.9s ease-out forwards';
+    if (count > 1) {
+      setTimeout(() => runCountdown(count - 1, done), 900);
+    } else {
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        done();
+      }, 900);
+    }
+  }
+
+  function updateTimerDisplay() {
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+    document.getElementById('timer').textContent = m + ':' + String(s).padStart(2,'0');
+  }
+
+  function setAllRed() {
+    for (let i = 0; i < 4; i++) {
+      const x = document.querySelector('#q' + i + ' .x-mark');
+      x.className = 'x-mark x-red';
+    }
+    activeQ = -1;
+  }
+
+  function lightRandom() {
+    if (!gameRunning || timeLeft <= 0) return;
+    let next;
+    do { next = Math.floor(Math.random() * 4); } while (next === activeQ);
+    if (activeQ >= 0) {
+      document.querySelector('#q' + activeQ + ' .x-mark').className = 'x-mark x-red';
+    }
+    activeQ = next;
+    document.querySelector('#q' + activeQ + ' .x-mark').className = 'x-mark x-green';
+  }
+
+  function handleTap(e, idx) {
+    e.preventDefault();
+    if (!gameRunning || timeLeft <= 0 || tapLocked) return;
+    tapLocked = true;
+    setTimeout(() => { tapLocked = false; }, 80);
+
+    if (idx === activeQ) {
+      score++;
+      document.getElementById('score').textContent = score;
+      lightRandom();
+    } else {
+      misses++;
+      document.getElementById('misses').textContent = misses;
+      triggerShake();
+    }
+  }
+
+  function triggerShake() {
+    const overlay  = document.getElementById('shake-overlay');
+    const gridWrap = document.getElementById('grid-wrap');
+    overlay.style.opacity = '1';
+    gridWrap.style.animation = 'none';
+    gridWrap.offsetHeight;
+    gridWrap.style.animation = 'shake 0.38s ease';
+    if (shakeTimeout) clearTimeout(shakeTimeout);
+    shakeTimeout = setTimeout(() => {
+      overlay.style.opacity = '0';
+      gridWrap.style.animation = 'none';
+    }, 400);
+  }
+
+  function endGame() {
+    clearInterval(timerInterval);
+    gameRunning = false;
+    setAllRed();
+
+    const total = score + misses;
+    const acc   = total > 0 ? Math.round((score / total) * 100) : 0;
+
+    let grade, gradeColor, msg;
+    if      (acc >= 95 && score >= 20) { grade = 'S'; gradeColor = '#FFD700'; msg = 'Superhuman reflexes!'; }
+    else if (acc >= 90)                 { grade = 'A'; gradeColor = '#22c55e'; msg = 'Excellent reaction time!'; }
+    else if (acc >= 75)                 { grade = 'B'; gradeColor = '#3b82f6'; msg = 'Great job — keep it up!'; }
+    else if (acc >= 60)                 { grade = 'C'; gradeColor = '#f59e0b'; msg = 'Good effort, practice more!'; }
+    else                                { grade = 'D'; gradeColor = '#ef4444'; msg = 'Keep training your reactions!'; }
+
+    const tapped = total > 0 ? `${score} of ${total}` : '0';
+    const rs = document.getElementById('result-screen');
+    rs.innerHTML = `
+      <h2>Time's up!</h2>
+      <div class="grade-block">
+        <div class="grade" style="color:${gradeColor}">${grade}</div>
+        <div class="grade-msg">${msg}</div>
+      </div>
+      <div class="result-card">
+        <div class="result-row">
+          <span class="result-label">Correct taps</span>
+          <span class="result-num g">${score}</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Wrong taps</span>
+          <span class="result-num r">${misses}</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Accuracy</span>
+          <span class="result-num w">${acc}%</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="play-again primary" ontouchstart="startGame(${timeLeft > 0 ? timeLeft : 60})" onclick="showStart()">Play again</button>
+        <button class="play-again" ontouchstart="showStart()" onclick="showStart()">Change time</button>
+      </div>
+    `;
+    showScreen('result-screen');
+  }
+
+  function showStart() {
+    if (timerInterval) clearInterval(timerInterval);
+    gameRunning = false;
+    showScreen('start-screen');
+    document.getElementById('timer').classList.remove('warn');
+  }
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
