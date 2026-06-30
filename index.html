@@ -45,8 +45,26 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2rem;
-      padding: 2rem;
+      gap: 1.5rem;
+      padding: 0 2rem 2rem 2rem;
+      padding-top: max(0px, env(safe-area-inset-top));
+    }
+
+    #ad-banner {
+      width: 100%;
+      max-width: 100%;
+      height: 56px;
+      background: #161616;
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      align-self: stretch;
+      margin: 0 -2rem;
+      margin-bottom: 0.5rem;
     }
 
     .logo-area {
@@ -198,31 +216,6 @@
       padding: 2px 6px;
       border-radius: 4px;
       letter-spacing: 0.5px;
-    }
-
-    /* ── AD BANNER ── */
-    #ad-banner {
-      width: 100%;
-      max-width: 300px;
-      height: 50px;
-      background: #161616;
-      border: 1px solid #222;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
-
-    #ad-banner .ad-label {
-      position: absolute;
-      top: 3px;
-      right: 6px;
-      font-size: 9px;
-      color: #444;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
     }
 
     /* Hide the placeholder text once a real ad loads */
@@ -490,6 +483,26 @@
 
   <!-- START SCREEN -->
   <div id="start-screen">
+
+    <!-- ═══════════════════════════════════════════════
+         ADMOB BANNER AD — TOP OF SCREEN
+         SETUP INSTRUCTIONS:
+         1. Go to admob.google.com and create an account
+         2. Add your app → Create an Ad Unit → choose "Banner"
+         3. Replace ca-app-pub-XXXXXXXXXXXXXXXX with your App ID
+            and XXXXXXXXXX with your Ad Unit ID below
+         4. Uncomment the <script> block at the bottom of this file
+         ═══════════════════════════════════════════════ -->
+    <div id="ad-banner">
+      <span class="ad-label">Ad</span>
+      <span class="ad-placeholder">Advertisement</span>
+      <ins class="adsbygoogle"
+           style="display:block;width:300px;height:50px;"
+           data-ad-client="ca-app-pub-XXXXXXXXXXXXXXXX"
+           data-ad-slot="XXXXXXXXXX">
+      </ins>
+    </div>
+
     <div class="logo-area">
       <span class="logo-icon">✕</span>
       <h1>Reaction Tap</h1>
@@ -501,13 +514,13 @@
         <span class="btn-sub">Quick game</span>
         <span class="btn-arrow">›</span>
       </div>
-      <div class="time-btn" ontouchstart="startGame(180)" onclick="startGame(180)">
-        <span>3 Minutes</span>
+      <div class="time-btn" ontouchstart="startGame(120)" onclick="startGame(120)">
+        <span>2 Minutes</span>
         <span class="btn-sub">Standard</span>
         <span class="btn-arrow">›</span>
       </div>
-      <div class="time-btn" ontouchstart="startGame(300)" onclick="startGame(300)">
-        <span>5 Minutes</span>
+      <div class="time-btn" ontouchstart="startGame(180)" onclick="startGame(180)">
+        <span>3 Minutes</span>
         <span class="btn-sub">Endurance</span>
         <span class="btn-arrow">›</span>
       </div>
@@ -523,32 +536,8 @@
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════
-         ADMOB BANNER AD
-         
-         SETUP INSTRUCTIONS:
-         1. Go to admob.google.com and create an account
-         2. Add your app → Create an Ad Unit → choose "Banner"
-         3. Replace the two YOUR_APP_ID and YOUR_AD_UNIT_ID
-            values below with your real IDs from AdMob
-         4. Uncomment the <script> tag below
-         5. The placeholder div will be replaced automatically
-            by AdMob once the real IDs are in place
-         ═══════════════════════════════════════════════ -->
-
-    <div id="ad-banner">
-      <span class="ad-label">Ad</span>
-      <span class="ad-placeholder">Advertisement</span>
-      <!-- Real AdMob banner renders here automatically -->
-      <ins class="adsbygoogle"
-           style="display:block;width:300px;height:50px;"
-           data-ad-client="ca-app-pub-XXXXXXXXXXXXXXXX"
-           data-ad-slot="XXXXXXXXXX">
-      </ins>
-    </div>
-
     <!--
-    STEP 2: When you have your AdMob App ID, uncomment this script
+    ADMOB SCRIPT: When you have your App ID, uncomment this block
     and replace YOUR_APP_ID with your real AdMob App ID:
 
     <script async
