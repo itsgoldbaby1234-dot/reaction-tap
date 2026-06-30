@@ -117,6 +117,120 @@
       font-size: 18px;
     }
 
+    /* ── HIGH SCORES ── */
+    #high-scores {
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .hs-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .hs-title {
+      color: #555;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .hs-trophy {
+      font-size: 13px;
+    }
+
+    .hs-card {
+      background: #161616;
+      border: 1px solid #222;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .hs-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e1e1e;
+      gap: 12px;
+    }
+
+    .hs-row:last-child { border-bottom: none; }
+
+    .hs-rank {
+      font-size: 13px;
+      font-weight: 700;
+      width: 20px;
+      text-align: center;
+    }
+
+    .hs-rank.gold   { color: #FFD700; }
+    .hs-rank.silver { color: #aaa; }
+    .hs-rank.bronze { color: #cd7f32; }
+
+    .hs-info { flex: 1; }
+
+    .hs-score {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .hs-acc {
+      font-size: 11px;
+      color: #555;
+      margin-top: 1px;
+    }
+
+    .hs-empty {
+      padding: 14px;
+      text-align: center;
+      color: #444;
+      font-size: 13px;
+    }
+
+    .hs-new {
+      font-size: 10px;
+      background: #22c55e;
+      color: #000;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── AD BANNER ── */
+    #ad-banner {
+      width: 100%;
+      max-width: 300px;
+      height: 50px;
+      background: #161616;
+      border: 1px solid #222;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #ad-banner .ad-label {
+      position: absolute;
+      top: 3px;
+      right: 6px;
+      font-size: 9px;
+      color: #444;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Hide the placeholder text once a real ad loads */
+    #ad-banner .ad-placeholder {
+      font-size: 11px;
+      color: #333;
+    }
+
     /* ── GAME SCREEN ── */
     #game-screen {
       flex: 1;
@@ -398,6 +512,52 @@
         <span class="btn-arrow">›</span>
       </div>
     </div>
+
+    <div id="high-scores">
+      <div class="hs-header">
+        <span class="hs-trophy">🏆</span>
+        <span class="hs-title">1 Minute Best Scores</span>
+      </div>
+      <div class="hs-card" id="hs-list">
+        <div class="hs-empty">No scores yet — play a 1 min game!</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         ADMOB BANNER AD
+         
+         SETUP INSTRUCTIONS:
+         1. Go to admob.google.com and create an account
+         2. Add your app → Create an Ad Unit → choose "Banner"
+         3. Replace the two YOUR_APP_ID and YOUR_AD_UNIT_ID
+            values below with your real IDs from AdMob
+         4. Uncomment the <script> tag below
+         5. The placeholder div will be replaced automatically
+            by AdMob once the real IDs are in place
+         ═══════════════════════════════════════════════ -->
+
+    <div id="ad-banner">
+      <span class="ad-label">Ad</span>
+      <span class="ad-placeholder">Advertisement</span>
+      <!-- Real AdMob banner renders here automatically -->
+      <ins class="adsbygoogle"
+           style="display:block;width:300px;height:50px;"
+           data-ad-client="ca-app-pub-XXXXXXXXXXXXXXXX"
+           data-ad-slot="XXXXXXXXXX">
+      </ins>
+    </div>
+
+    <!--
+    STEP 2: When you have your AdMob App ID, uncomment this script
+    and replace YOUR_APP_ID with your real AdMob App ID:
+
+    <script async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-YOUR_APP_ID"
+      crossorigin="anonymous">
+    </script>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    -->
+
   </div>
 
   <!-- GAME SCREEN -->
@@ -452,6 +612,48 @@
   let timeLeft = 0, timerInterval = null, shakeTimeout = null;
   let gameRunning = false;
   let tapLocked = false;
+  let gameDuration = 0;
+
+  // ── HIGH SCORES ──
+  function getHighScores() {
+    try { return JSON.parse(localStorage.getItem('rt_hs') || '[]'); }
+    catch(e) { return []; }
+  }
+
+  function saveHighScore(sc, acc) {
+    const scores = getHighScores();
+    scores.push({ score: sc, acc: acc, date: new Date().toLocaleDateString() });
+    scores.sort((a, b) => b.score - a.score || b.acc - a.acc);
+    const top3 = scores.slice(0, 3);
+    localStorage.setItem('rt_hs', JSON.stringify(top3));
+    return top3;
+  }
+
+  function renderHighScores(newScore) {
+    const scores = getHighScores();
+    const list = document.getElementById('hs-list');
+    if (!list) return;
+    if (scores.length === 0) {
+      list.innerHTML = '<div class="hs-empty">No scores yet — play a 1 min game!</div>';
+      return;
+    }
+    const ranks = [
+      { cls: 'gold',   icon: '🥇' },
+      { cls: 'silver', icon: '🥈' },
+      { cls: 'bronze', icon: '🥉' },
+    ];
+    list.innerHTML = scores.map((s, i) => `
+      <div class="hs-row">
+        <span class="hs-rank ${ranks[i].cls}">${ranks[i].icon}</span>
+        <div class="hs-info">
+          <div class="hs-score">${s.score} taps</div>
+          <div class="hs-acc">${s.acc}% accuracy · ${s.date}</div>
+        </div>
+        ${newScore !== undefined && s.score === newScore && i === scores.findIndex(x => x.score === newScore)
+          ? '<span class="hs-new">NEW</span>' : ''}
+      </div>
+    `).join('');
+  }
 
   function showScreen(id) {
     ['start-screen','game-screen','result-screen'].forEach(s => {
@@ -464,7 +666,8 @@
 
   function startGame(seconds) {
     score = 0; misses = 0; activeQ = -1;
-    timeLeft = seconds; gameRunning = false; tapLocked = false;
+    timeLeft = seconds; gameDuration = seconds;
+    gameRunning = false; tapLocked = false;
     document.getElementById('score').textContent = '0';
     document.getElementById('misses').textContent = '0';
     updateTimerDisplay();
@@ -565,6 +768,13 @@
     const total = score + misses;
     const acc   = total > 0 ? Math.round((score / total) * 100) : 0;
 
+    // Save high score for 1-minute games only
+    let newHsScore;
+    if (gameDuration === 60) {
+      saveHighScore(score, acc);
+      newHsScore = score;
+    }
+
     let grade, gradeColor, msg;
     if      (acc >= 95 && score >= 20) { grade = 'S'; gradeColor = '#FFD700'; msg = 'Superhuman reflexes!'; }
     else if (acc >= 90)                 { grade = 'A'; gradeColor = '#22c55e'; msg = 'Excellent reaction time!'; }
@@ -607,7 +817,11 @@
     gameRunning = false;
     showScreen('start-screen');
     document.getElementById('timer').classList.remove('warn');
+    renderHighScores();
   }
+
+  // Init high scores on load
+  window.addEventListener('load', () => { renderHighScores(); });
 
   // Register service worker
   if ('serviceWorker' in navigator) {
